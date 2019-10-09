@@ -4,6 +4,8 @@ import com.huobi.client.SubscriptionErrorHandler;
 import com.huobi.client.SubscriptionListener;
 import com.huobi.client.impl.utils.Handler;
 
+import java.util.List;
+
 class WebsocketRequest<T> {
 
   WebsocketRequest(SubscriptionListener<T> listener, SubscriptionErrorHandler errorHandler) {
@@ -17,4 +19,5 @@ class WebsocketRequest<T> {
   final SubscriptionListener<T> updateCallback;
   RestApiJsonParser<T> jsonParser;
   final SubscriptionErrorHandler errorHandler;
+  List<String> klineChannelAllList;
 }

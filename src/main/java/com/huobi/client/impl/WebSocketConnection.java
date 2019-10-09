@@ -1,5 +1,6 @@
 package com.huobi.client.impl;
 
+import static com.huobi.client.impl.utils.InternalUtils.await;
 import static com.huobi.client.impl.utils.InternalUtils.decode;
 
 import com.huobi.client.SubscriptionOptions;
@@ -10,6 +11,8 @@ import com.huobi.client.impl.utils.TimeService;
 import com.huobi.client.impl.utils.UrlParamsBuilder;
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
+
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.WebSocket;
@@ -167,6 +170,7 @@ public class WebSocketConnection extends WebSocketListener {
       String data;
       try {
         data = new String(decode(bytes.toByteArray()));
+        System.out.println("==============="+data);
       } catch (IOException e) {
         log.error("[Sub][" + this.connectionId
             + "] Receive message error: " + e.getMessage());
@@ -197,6 +201,14 @@ public class WebSocketConnection extends WebSocketListener {
       } else if (jsonWrapper.containKey("ping")) {
         processPingOnMarketLine(jsonWrapper, webSocket);
       } else if (jsonWrapper.containKey("subbed")) {
+      } else if (jsonWrapper.containKey("rep")) {
+        onReceive(jsonWrapper);
+        List<String> ll = request.klineChannelAllList;
+        if (ll!=null){
+          request.connectionHandler.handle(this);
+          request.klineChannelAllList.remove(0);
+          await(500);
+        }
       }
     } catch (Exception e) {
       log.error("[Sub][" + this.connectionId

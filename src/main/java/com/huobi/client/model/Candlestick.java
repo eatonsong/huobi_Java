@@ -1,7 +1,6 @@
 package com.huobi.client.model;
 
 import java.math.BigDecimal;
-
 /**
  * The candlestick/kline data.
  */

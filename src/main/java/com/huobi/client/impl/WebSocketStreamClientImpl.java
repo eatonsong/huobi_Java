@@ -4,6 +4,7 @@ import com.huobi.client.SubscriptionClient;
 import com.huobi.client.SubscriptionErrorHandler;
 import com.huobi.client.SubscriptionListener;
 import com.huobi.client.SubscriptionOptions;
+import com.huobi.client.model.Candlestick;
 import com.huobi.client.model.enums.BalanceMode;
 import com.huobi.client.model.enums.CandlestickInterval;
 import com.huobi.client.model.event.AccountEvent;
@@ -59,6 +60,14 @@ public class WebSocketStreamClientImpl implements SubscriptionClient {
       CandlestickInterval interval,
       SubscriptionListener<CandlestickEvent> callback) {
     subscribeCandlestickEvent(symbols, interval, callback, null);
+  }
+
+  @Override
+  public void subscribeAllCandlestickEvent(String symbols,
+                                           CandlestickInterval interval,
+                                           SubscriptionListener<List> callback) {
+    createConnection(requestImpl.subscribeAllCandlestickEvent(
+            parseSymbols(symbols), interval, callback, null));
   }
 
   @Override

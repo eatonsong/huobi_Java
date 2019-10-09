@@ -2,6 +2,9 @@ package com.huobi.client.impl;
 
 import static com.huobi.client.impl.utils.InternalUtils.await;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.huobi.client.SubscriptionErrorHandler;
 import com.huobi.client.SubscriptionListener;
 import com.huobi.client.impl.utils.Channels;
@@ -29,6 +32,8 @@ import com.huobi.client.model.event.OrderUpdateEvent;
 import com.huobi.client.model.event.PriceDepthEvent;
 import com.huobi.client.model.event.TradeEvent;
 import com.huobi.client.model.event.TradeStatisticsEvent;
+
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -40,6 +45,48 @@ class WebsocketRequestImpl {
     this.apiKey = apiKey;
   }
 
+  WebsocketRequest<List> subscribeAllCandlestickEvent(
+          List<String> symbols,
+          CandlestickInterval interval,
+          SubscriptionListener<List> subscriptionListener,
+          SubscriptionErrorHandler errorHandler) {
+    InputChecker.checker()
+            .checkSymbolList(symbols)
+            .shouldNotNull(subscriptionListener, "listener")
+            .shouldNotNull(interval, "CandlestickInterval");
+    WebsocketRequest<List> request =
+            new WebsocketRequest<List>(subscriptionListener, errorHandler);
+    if (symbols.size() == 1) {
+      request.name = "Candlestick for " + symbols;
+    } else {
+      request.name = "Candlestick for " + symbols + " ...";
+    }
+    String symbol = symbols.get(0);
+    List<String> all = Channels.klineChannelAll(symbol, interval);
+    request.klineChannelAllList = all;
+    request.connectionHandler = (connection) ->{
+      System.out.println(request.klineChannelAllList.get(0));
+      connection.send(request.klineChannelAllList.get(0));
+      await(1);};
+    request.jsonParser = (jsonWrapper) -> {
+      JsonWrapperArray dataArray = jsonWrapper.getJsonArray("data");
+      List<Candlestick> rs = new ArrayList<>();
+      dataArray.forEach(tick->{
+        Candlestick data = new Candlestick();
+        data.setTimestamp(TimeService.convertCSTInSecondToUTC(tick.getLong("id")));
+        data.setOpen(tick.getBigDecimal("open"));
+        data.setClose(tick.getBigDecimal("close"));
+        data.setLow(tick.getBigDecimal("low"));
+        data.setHigh(tick.getBigDecimal("high"));
+        data.setAmount(tick.getBigDecimal("amount"));
+        data.setCount(tick.getLong("count"));
+        data.setVolume(tick.getBigDecimal("vol"));
+        rs.add(data);
+      });
+      return rs;
+    };
+    return request;
+  }
   WebsocketRequest<CandlestickEvent> subscribeCandlestickEvent(
       List<String> symbols,
       CandlestickInterval interval,
